@@ -60,17 +60,17 @@ VectorXcd DFT( VectorXcd Y )
     
     for( int k = 0; k < res.size(); k++)
         res[k] *= pow( -1., k + start);
-    
+
     return res;
 }
 
 
 void print_input( const VectorXcd &Y, ostream &os)
 {
-     int n = Y.size();
-
-     for( int k = 0; k < n; k++)
-         os << (-M_PI + 2. * k * M_PI / n) << "  " << Y[k].real() << "\n";
+    int n = Y.size();
+    
+    for( int k = 0; k < n; k++)
+        os << (-M_PI + 2. * k * M_PI / n) << "  " << Y[k].real() << "\n";
 }
 
 
