@@ -4,7 +4,7 @@
 // g++ -g -o simple_fft  simple_fft.cpp
 //
 // Execute:
-// ./dft  0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17
+// ./simple_fft  0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17
 //
 // Plot using gnuplot:
 // plot "plot_out.txt" using 1:2 with lines lw 3, "plot_in.txt" using 1:2:(0.03) with circles fill solid
