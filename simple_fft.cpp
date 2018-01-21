@@ -29,7 +29,7 @@ static unsigned bit_reverse( unsigned int in, unsigned int used_bits)
     unsigned int i, bit_len = used_bits-1;
     
     for( i = 0; i <= bit_len; i++)
-        r |= (in & 1 << i) ? (1 << bit_len-i) : 0;
+        r |= (in & 1 << i) ? (1 << (bit_len - i)) : 0;
     
     return r;
 }
@@ -66,8 +66,7 @@ static void butterfly( vector<complex_t> &a, size_t s, size_t e)  // s and e are
     int d = e-s;
     assert( d > 0 );
     int n = d+1;
-    complex_t om = omega( n );
-    om = 1. / om;
+    complex_t om = 1. / omega( n );
     int h = n/2;      // half
     int hs = s + h;   // half start
     
@@ -88,11 +87,12 @@ static void butterfly( vector<complex_t> &a, size_t s, size_t e)  // s and e are
 }
 
 
-vector<complex_t> FFT( vector<complex_t> Y )  // Y's length must be a power of 2
+vector<complex_t> FFT( const vector<complex_t> &in )  // in's length must be a power of 2
 {
+    vector<complex_t> Y = in;
     int n = Y.size();
-    int start = (int)ceil( ((double)n) / 2. ) -1;
-    complex_t oms = pow( omega(n), (double)start);
+    double start = ceil( ((double)n) / 2. ) - 1.;
+    complex_t oms = pow( omega(n), start);
     
     for( int k = 0; k < n; k++)
         Y[k] *= pow( oms, (double)k);
@@ -100,15 +100,10 @@ vector<complex_t> FFT( vector<complex_t> Y )  // Y's length must be a power of 2
     butterfly( Y, 0, n-1);
     unscramble( Y );
 
-    vector<complex_t> res;
-    res.resize( n );
-    res = Y;
-    for( int k = 0; k < res.size(); k++)
-        res[k] *= pow( -1., k + start);
-    for( int k = 0; k < res.size(); k++)
-        res[k] /= n;
+    for( int k = 0; k < n; k++)
+        Y[k] *= pow( -1., k + start) / (double)n;
     
-    return res;
+    return Y;
 }
 
 
@@ -126,9 +121,8 @@ void print_DFTPoly( const vector<complex_t> &Y, double step_x, ostream &os)
     int n = Y.size();
     
     vector<complex_t> coeffs = FFT( Y );
-
+    
     int zero = (n - 1) / 2;
-    //cout << "zero is at " << zero << "\n";
     
     for( double x = -M_PI; x <= M_PI; x += step_x)
     {
