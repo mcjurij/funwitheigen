@@ -116,11 +116,11 @@ void print_input( const vector<complex_t> &Y, ostream &os)
 }
 
 
-void print_DFTPoly( const vector<complex_t> &Y, double step_x, ostream &os)
+void print_DFTPoly( const vector<complex_t> &in, double step_x, ostream &os)
 {
-    int n = Y.size();
+    int n = in.size();
     
-    vector<complex_t> coeffs = FFT( Y );
+    vector<complex_t> coeffs = FFT( in );
     
     int zero = (n - 1) / 2;
     
