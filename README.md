@@ -12,3 +12,11 @@ The FFT is in simple_fft.cpp. The output of dft.cpp and simple_fft.cpp ought to 
 the length of the input vector is a power of two.
 
 To see the output as a graph (see saw17.png and fft_saw17.png) you need a plotter like gnuplot.  
+
+
+complex_mul.cpp does a hard coded polynomail multiplication using FFT/IFFT.
+[Schnelle Multiplikation von Polynomen mit FFT](https://www.youtube.com/watch?v=G4XiNDprjXA) by Prof Weitz.
+
+modulo_mul.cpp shows a proof of concept by using modulo arithmetics.
+[Grundidee des Schönhage-Strassen-Algorithmus (schnelle Multiplikation großer Zahlen)](https://www.youtube.com/watch?v=ytkcYkzN1oI) by Prof Weitz.
+Translated: Basic idea of the Schoenhage-Strassen algorithm (fast multiplication of large numbers).
