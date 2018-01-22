@@ -14,7 +14,7 @@ the length of the input vector is a power of two.
 To see the output as a graph (see saw17.png and fft_saw17.png) you need a plotter like gnuplot.  
 
 
-complex_mul.cpp does a hard coded polynomail multiplication using FFT/IFFT.
+complex_mul.cpp does a hard coded polynomial multiplication using FFT/IFFT.
 [Schnelle Multiplikation von Polynomen mit FFT](https://www.youtube.com/watch?v=G4XiNDprjXA) by Prof Weitz.
 
 modulo_mul.cpp shows a proof of concept by using modulo arithmetics.
