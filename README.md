@@ -1,4 +1,4 @@
-A DFT and a FFT. It's just me playing around.
+Various Fourier transform experiments. It's just me playing around.
 
 Build and use instructions in the respective source file.
 
