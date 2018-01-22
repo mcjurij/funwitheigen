@@ -244,8 +244,14 @@ vector<mint> mk_vector( const string &s, int n)
 
 int main( int argc, char **argv)
 {
-    vector<mint> P, p, Q, q;
+    vector<mint> P, Q;
 
+    if( argc != 3 )
+    {
+        std::cerr << "need 2 numbers\n";
+        return 1;
+    }
+    
     string ps = argv[1];
     string pq = argv[2];
     
