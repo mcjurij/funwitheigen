@@ -4,7 +4,7 @@
 // g++ -g -o modulo_mul_233 modulo_mul_233.cpp
 //
 // Execute:
-// ./modulo_mul 5431 7842
+// ./modulo_mul_233 5431 7842
 // 5431 times 7842 equals 42589902
 
 #include <iostream>
