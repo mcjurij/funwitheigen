@@ -141,9 +141,30 @@ void print_DFTPoly( const vector<complex_t> &in, double step_x, ostream &os)
 }
 
 
+#ifdef USE_SPECIAL_INPUT
+vector<complex_t> special_input( int n )
+{
+    vector<complex_t> in( n );
+    int i;
+    double step = 2. * M_PI / n;
+    step *= 8.;
+    
+    for( i = 0; i < n/2; i++)
+        in[i] = complex_t( sin( step * i ), 0.);
+
+    for( ; i < n; i++)
+        in[i] = complex_t( sin( -(M_PI/2.) + step * i ), 0.);
+    return in;
+}
+#endif
+
 int main( int argc, char **argv)
 {
     vector<complex_t> in;
+#ifdef USE_SPECIAL_INPUT
+    in = special_input( 256 );
+    int l = in.size();
+#else
     int l = argc - 1;
 
     if( l < 3 )
@@ -151,6 +172,7 @@ int main( int argc, char **argv)
         std::cerr << "input too small\n";
         return 1;
     }
+#endif
     
     int bm = 1;
     int bpos = 0;
@@ -161,10 +183,12 @@ int main( int argc, char **argv)
     }
 
     int n = 1<<bpos;
-
     in.resize( n );
+    
+#ifndef USE_SPECIAL_INPUT
     for( int i = 0; i < l; i++)
         in[i] = complex_t( atof( argv[i+1] ), 0.);
+#endif
     
     if( l < n )
     {

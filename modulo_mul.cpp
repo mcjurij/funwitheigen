@@ -128,6 +128,9 @@ static void unscramble( vector<mint> &v )
 
 static mint mod = 0;
 
+static int base = 10000;  // changing this means you have to find new omegas (which is very difficult)
+static int exp  = 4;      // dito
+
 static mint omega_array[7];         // n = 2^7 max
 static mint inv_omega_array[7];
 
@@ -169,7 +172,7 @@ static void butterfly( vector<mint> &a, size_t s, size_t e, int depth, bool inve
 }
 
 
-vector<mint> FFT( const vector<mint> &in, bool inverse=false)  // in's length must be 8
+vector<mint> FFT( const vector<mint> &in, bool inverse=false)
 {
     vector<mint> Y = in;
     int n = Y.size();
@@ -181,7 +184,7 @@ vector<mint> FFT( const vector<mint> &in, bool inverse=false)  // in's length mu
 }
 
 
-vector<mint> IFFT( const vector<mint> &in )  // in's length must be 8
+vector<mint> IFFT( const vector<mint> &in )
 {
     vector<mint> Y = FFT( in, true);
 
@@ -194,81 +197,236 @@ vector<mint> IFFT( const vector<mint> &in )  // in's length must be 8
 }
 
 
+struct rc_omegas {
+    int  n;
+    mint mod;
+    vector<mint> omegas;
+};
+
+
+rc_omegas omegas[2] = {
+    { 32,  356665537, { 12459978, 250152976, 180225010, 280067532, 356665536 }},
+    { 32,  356094209, { 12460007, 40729184, 132302520, 312423919, 356094208 }}
+};
+
+
 bool pick_omegas( int n )
 {
     int t;
     int butterfly_depth;
-    bool found = false;
-    for( mod = 1000; mod < 100000 && !found; mod++)
+    bool found = true;
+    
+    int depth = 0;
+
+    rc_omegas rc_omega = omegas[1];  // trial and error
+    assert( n == rc_omega.n );
+    mod = rc_omega.mod;
+
+    for( butterfly_depth = 0; butterfly_depth < rc_omega.omegas.size(); butterfly_depth++)
     {
-        for( t = 233; t < mod; t++)
+        omega_array[ butterfly_depth ] = rc_omega.omegas[ butterfly_depth ];
+    }
+    
+    for( depth = 0; depth < butterfly_depth; depth++)
+    {
+        int inv = find_inverse( omega_array[ depth ], mod);
+        if( inv != 0 && inv != 1 )
         {
-            int tn = n;
-            int om=t;
-            butterfly_depth = 0;
-            
-            while( pow_mod( om, tn, mod) == 1 && !found )
-            {
-                omega_array[ butterfly_depth++ ] = om;
-               
-                om = pow_mod( om, 2, mod);
-               
-                if( tn > 2 )
-                    tn >>= 1;
-                else
-                    found = true;
-            }
-            
-            if( found && omega_array[ butterfly_depth-1 ] == mod-1 )
-                break;
-            else
-                found = false;
+            inv_omega_array[ depth ] = inv;
         }
-        
-        if( found )
+        else
         {
-            int depth = 0;
-            for( depth = 0; depth < butterfly_depth; depth++)
-            {
-                int inv = find_inverse( omega_array[ depth ], mod);
-                if( inv != 0 && inv != 1 )
-                {
-                    inv_omega_array[ depth ] = inv;
-                }
-                else
-                {
-                    found = false;
-                    break;
-                }
-            }
-            
-            if( found && depth == butterfly_depth )
-                break;
-            else
-                found = false;
+            found = false;
+            break;
         }
     }
     
+    if( found && depth == butterfly_depth )
+        found = true;
+    else
+        found = false;
+
+    if( found )
+        cout << "mod = " << mod << ", omega = " << omega_array[0] << "\n";
     return found;
 }
 
 
-vector<mint> mk_vector( const string &s )
+vector<mint>  string_to_num( const string &ns )
 {
-    int i, mlen = (int)s.length();
-    vector<mint> v;
-    v.resize( mlen );
+    vector<mint> nv;
+    int e;
+    mint v;
+    size_t i;
+    string s = ns;
+    reverse( s.begin(), s.end());
     
-    for( i = 0; i < mlen; i++)
+    for( i = 0; i < (s.size() - exp); i += exp)
     {
-        char c = s[ s.length() - 1 - i ];
-        if( isdigit( c ) )
-            v[i] = c - '0';
-        else
+        size_t k;
+        e = 1;
+        v = 0;
+        if( i + exp >= s.size() )
             break;
+        for( k = 0; k < exp; k++)
+        {
+            if( !isdigit( s[i+k] ) )
+                std::cerr << "Not a digit '" << s[i+k] << "'\n";
+            v += ( s[i+k] - '0' ) * e;
+            e *= 10;
+        }
+        
+        nv.push_back( v );
+    }
+
+    if( i < s.size() )
+    {
+        e = 1;
+        v = 0;
+        for( ; i < s.size(); i++)
+        {
+            v += ( s[i] - '0' ) * e;
+            e *= 10;
+        }
+        
+        nv.push_back( v );
     }
     
-    return v;
+    return nv;
+}
+
+typedef vector<mint> num_t;
+
+num_t  add( const num_t &a, const num_t &b)
+{
+    size_t m = std::max( a.size(), b.size());
+    int carry = 0;
+    num_t r;
+
+    r.resize( m );
+
+    for( size_t i = 0; i < m; i++)
+    {
+        int s = (i < a.size() ? a[i] : 0 ) + (i < b.size() ? b[i] : 0) + carry;
+        carry = 0;
+            
+        r[ i ] = s % base;
+        carry = (s - r[i]) / base;
+    }
+
+    if( carry > 0 )
+        r.push_back( carry );
+
+    return r;
+}
+
+
+num_t mul( const num_t &a, const num_t &b)
+{
+    int carry = 0;
+    num_t r;
+    size_t pos = 0;
+
+    for( ; pos < b.size(); pos++)
+    {
+        num_t p;
+        p.resize( a.size()+pos );
+        for( size_t i = 0; i < pos; i++)
+        {
+            p[i] = 0;
+        }
+        carry = 0;
+        for( size_t i = pos; i < a.size()+pos; i++)
+        {
+            
+            int s = a[i-pos] * b[pos] + carry;
+            
+            p[ i ] = s % base;
+            carry = (s - p[i]) / base;
+            //cout << " carry = " << carry << "\n";
+        }
+        
+        if( carry > 0 )
+            p.push_back( carry );
+
+        r = add( r, p);
+    }
+ 
+    num_t tmp;
+
+    pos = r.size()-1;
+    while( r[pos] == 0 )
+        pos--;
+    while( pos > 0 )
+        tmp.push_back( r[pos--] );
+     tmp.push_back( r[pos] );
+    reverse( begin(tmp), end(tmp));
+    
+    return tmp;
+}
+
+
+bool compare( const num_t &a, const num_t &b)
+{
+    size_t pos = 0;
+
+    if( a.size() != b.size() )
+        return false;
+    
+    for( ; pos < b.size(); pos++)
+    {
+        if( a[pos] != b[pos] )
+            return false;
+    }
+
+    return true;
+}
+
+
+void print_coeff( const vector<mint> &v, const num_t &comp)
+{
+    int i;
+    
+    /*for( i = 0; i < v.size(); i++)
+    {
+        printf( "%d\n", v[ v.size() - 1 - i]);
+    }
+    */
+    
+    num_t r, tmp;
+    r.push_back( 0 );
+
+    int pos = 0;
+    for( i = 0; i < v.size(); i++, pos += exp)
+    {
+        num_t c;
+
+        c.resize( i+1 );
+        c[i] = v[i];
+        r = add( r, c);
+    }
+
+    pos = r.size()-1;
+    while( r[pos] == 0 )
+        pos--;
+    while( pos > 0 )
+        tmp.push_back( r[pos--] );
+     tmp.push_back( r[pos] );
+    std::reverse( begin(tmp), end(tmp));
+    r = tmp;
+    
+    for( i = 0; i < r.size(); i++)
+    {
+        mint v = r[ r.size() - 1 - i];
+
+        printf( "%04d", v);
+    }
+    cout << "\n";
+
+    if( compare( comp, r) )
+        cout << "EQUAL!\n";
+    else
+        cout << "DIFFER!\n";
 }
 
 
@@ -285,10 +443,29 @@ vector<mint> fill_vector( const vector<mint> &v, int n)
 }
 
 
-int main( int argc, char **argv)
+void multiply( const vector<mint> &pv, vector<mint> &qv)
 {
     vector<mint> P, Q;
+    
+    P = FFT( pv );
+    Q = FFT( qv );
+    
+    vector<mint> R;
+    R.resize( 32 );
+    int i;
+    for( i = 0; i < R.size(); i++)
+        R[i] = mul_mod( P[i], Q[i], mod);
+    
+    vector<mint> poly_coeff = IFFT( R );
 
+    num_t comp = mul( pv, qv);
+    
+    print_coeff( poly_coeff, comp);
+}
+
+
+int main( int argc, char **argv)
+{
     if( argc != 3 )
     {
         std::cerr << "need 2 numbers\n";
@@ -298,8 +475,8 @@ int main( int argc, char **argv)
     string ps = argv[1];
     string qs = argv[2];
 
-    vector<mint> pv = mk_vector( ps );
-    vector<mint> qv = mk_vector( qs );
+    vector<mint> pv = string_to_num( ps );
+    vector<mint> qv = string_to_num( qs );
     int l = (int)std::max( pv.size(), qv.size());
     
     int bm = 1;
@@ -310,12 +487,16 @@ int main( int argc, char **argv)
         bpos++;
     }
 
-    int n = 1<< (bpos + 1);
-    if( n > (1<<7) )
+    int n = 1<<bpos;
+    if( n > 16 )
     {
         std::cerr << "input too large\n";
         return 1;
     }
+    else
+        n = 32;
+
+    cout << "n = " << n << "\n";
     
     pv = fill_vector( pv, n);
     qv = fill_vector( qv, n);
@@ -325,25 +506,8 @@ int main( int argc, char **argv)
         std::cerr << "no residual class found\n";
         return 1;
     }
+  
+    multiply( pv, qv);
     
-    P = FFT( pv );
-    Q = FFT( qv );
-    
-    vector<mint> R;
-    R.resize( n );
-    int i;
-    for( i = 0; i < R.size(); i++)
-        R[i] = mul_mod( P[i], Q[i], mod);
-    
-    vector<mint> poly_coeff = IFFT( R );
-    
-    mint e = 1;
-    mint r = 0;                   // 64 bit is too small to hold sum
-    for( i = 0; i < poly_coeff.size(); i++)
-    {
-        r += poly_coeff[i] * e;   // you need something bigger here ;-) 
-        e *= 10;
-    }
-    cout << r << "\n";
     return 0;
 }
